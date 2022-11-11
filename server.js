@@ -15,19 +15,12 @@ const dbLib = require('./dbFunctions');
 // Server port
 const port = 8080;
 
-webapp.use(express.urlencoded({
-  extended: true,
-}));
+webapp.use(express.json());
 
 // declare DB reference variable
 
-let db;
 
 // Start server and connect to the DB
-webapp.listen(port, async () => {
-  db = await dbLib.connect();
-  console.log(`Server running on port:${port}`);
-});
 
 // Root endpoint
 webapp.get('/', (_req, res) => {
@@ -52,7 +45,7 @@ webapp.get('/student/:id', async (req, res) => {
       res.status(404).json({ error: 'id is missing' });
       return;
     }
-    const result = await dbLib.getAStudent(db, req.params.id);
+    const result = await dbLib.getAStudent(req.params.id);
     if (result === undefined) {
       res.status(404).json({ error: 'bad user id' });
       return;
@@ -64,7 +57,7 @@ webapp.get('/student/:id', async (req, res) => {
 });
 
 webapp.post('/student/', async (req, res) => {
-  console.log('CREATE a student');
+  console.log('CREATE a student', req.body);
   if (!req.body.name || !req.body.email || !req.body.major) {
     res.status(404).json({ error: 'missing name or email or major' });
     return;
@@ -75,15 +68,16 @@ webapp.post('/student/', async (req, res) => {
     email: req.body.email,
     major: req.body.major,
   };
+
   try {
-    const result = await dbLib.addStudent(db, newStudent);
-    console.log(`id: ${JSON.stringify(result)}`);
+    const result = await dbLib.addStudent(newStudent);
+    console.log(`id: ${result.insertedId}`, result.insertedId);
     // add id to new player and return it
     res.status(201).json({
-      student: { id: result, ...newStudent },
+      student: { id: result.insertedId, ...newStudent },
     });
   } catch (err) {
-    console.log('wow in here', err.message);
+    console.log('wow in here', err);
     res.status(404).json({ error: err.message });
   }
 });
@@ -95,7 +89,7 @@ webapp.delete('/student/:id', async (req, res) => {
   }
   console.log('DELETE a player');
   try {
-    const result = await dbLib.deleteStudent(db, req.params.id);
+    const result = await dbLib.deleteStudent(req.params.id);
     console.log(`result-->${result}`);
     if (Number(result) === 0) {
       res.status(404).json({ error: 'student not in the system' });

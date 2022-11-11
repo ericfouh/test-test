@@ -1,47 +1,73 @@
 // this is a node app, we must use commonJS modules/ require
 
 // import the mongodb driver
-const { MongoClient } = require('mongodb');
-
-// import ObjectID
-const { ObjectId } = require('mongodb');
+const { 
+  MongoClient, 
+  ObjectId, 
+  Db
+} = require('mongodb');
 
 // the mongodb server URL
 const dbURL = 'mongodb+srv://test:0gcb1NPERFKJYTZj@cluster0.r0pf1cv.mongodb.net/LectureExample?retryWrites=true&w=majority';
 
+/**
+ * MongoClient for database connection.
+ * 
+ * @type {MongoClient}
+ */
+let _mongoClient;
+
 // connection to the db
+/**
+ * The connected mongo client.
+ * @returns {Promise<MongoClient>}
+ */
 const connect = async () => {
   // always use try/catch to handle any exception
   try {
-    const con = (await MongoClient.connect(
+    _mongoClient = await MongoClient.connect(
       dbURL,
       { useNewUrlParser: true, useUnifiedTopology: true },
-    )).db();
-    // check that we are connected to the db
-    console.log(`connected to db: ${con.databaseName}`);
-    return con;
+    );
+    console.log(`Connected to mongodb`);
   } catch (err) {
-    console.log(err.message);
+    console.log(err);
   }
 };
+
+const getDb = async () => {
+  let cl;
+  if (!_mongoClient) {
+    await dbStuff.connect();
+  } 
+  
+  cl = _mongoClient;
+  
+  return cl.db();
+}
+
+/**
+ * The mongo client running on the server.
+ * 
+ * @returns {MongoClient}
+ */
+const getMongoClient = () => _mongoClient;
+
+const dbStuff = {
+  connect,
+  getDb
+}
 
 // CREATE a new student
 // takes a db connector and a student object
 // and add the user to the DB
-const addStudent = (db, newStudent) => {
+const addStudent = async (newStudent) => {
+  console.log('adding student');
+  const db = await dbStuff.getDb();
   // callback version
-  db.collection('students').insertOne(
-    newStudent,
-    (err, result) => {
-      // if there was an error
-      if (err) {
-        console.log(`error: ${err.message}`);
-        return;
-      }
-      // print the id of the student
-      console.log(`New student created with id: ${result.insertedId}`);
-    },
-  );
+  const result = await db.collection('students').insertOne(newStudent);
+  console.log(`New student created with id: ${result.insertedId}`);
+  return result;
 };
 
 // READ all students
@@ -58,8 +84,9 @@ const getAllStudents = async (db) => {
 };
 
 // READ a student given their ID
-const getAStudent = async (db, studentID) => {
+const getAStudent = async (studentID) => {
   try {
+    const db = await getDb();
     const result = await db.collection('students').findOne({ _id: ObjectId(studentID) });
     
     // print the result
@@ -71,8 +98,9 @@ const getAStudent = async (db, studentID) => {
 };
 
 // UPDATE a student given their ID
-const updateStudent = async (db, studentID, newMajor) => {
+const updateStudent = async (studentID, newMajor) => {
   try {
+    const db = await dbStuff.getDb();
     const result = await db.collection('students').updateOne(
       { _id: ObjectId(studentID) },
       { $set: { major: newMajor } },
@@ -85,8 +113,9 @@ const updateStudent = async (db, studentID, newMajor) => {
 };
 
 // DELETE a student given their ID
-const deleteStudent = async (db, studentID) => {
+const deleteStudent = async (studentID) => {
   try {
+    const db = await getDb();
     const result = await db.collection('students').deleteOne(
       { _id: ObjectId(studentID) },
     );
@@ -111,5 +140,12 @@ const main = async () => {
 // execute main
 // main();
 module.exports = {
-  connect, addStudent, getAllStudents, getAStudent, updateStudent, deleteStudent,
+  dbStuff,
+  connect, 
+  addStudent, 
+  getAllStudents, 
+  getAStudent, 
+  updateStudent, 
+  deleteStudent, 
+  getMongoClient
 };
