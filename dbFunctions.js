@@ -36,14 +36,11 @@ const connect = async () => {
 };
 
 const getDb = async () => {
-  let cl;
   if (!_mongoClient) {
     await dbStuff.connect();
   } 
   
-  cl = _mongoClient;
-  
-  return cl.db();
+  return _mongoClient.db();
 }
 
 /**
