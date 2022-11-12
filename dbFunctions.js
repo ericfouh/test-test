@@ -37,7 +37,7 @@ const connect = async () => {
 
 const getDb = async () => {
   if (!_mongoClient) {
-    await dbStuff.connect();
+    await connect();
   } 
   
   return _mongoClient.db();
@@ -60,7 +60,7 @@ const dbStuff = {
 // and add the user to the DB
 const addStudent = async (newStudent) => {
   console.log('adding student');
-  const db = await dbStuff.getDb();
+  const db = await getDb();
   // callback version
   const result = await db.collection('students').insertOne(newStudent);
   console.log(`New student created with id: ${result.insertedId}`);
@@ -97,7 +97,7 @@ const getAStudent = async (studentID) => {
 // UPDATE a student given their ID
 const updateStudent = async (studentID, newMajor) => {
   try {
-    const db = await dbStuff.getDb();
+    const db = await getDb();
     const result = await db.collection('students').updateOne(
       { _id: ObjectId(studentID) },
       { $set: { major: newMajor } },
