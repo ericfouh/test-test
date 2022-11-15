@@ -1,18 +1,18 @@
 // this is a node app, we must use commonJS modules/ require
 
 // import the mongodb driver
-const { 
-  MongoClient, 
-  ObjectId, 
-  Db
-} = require('mongodb');
+const { MongoClient, ObjectId } = require("mongodb");
+
+const packageJSON = require("./package.json");
+const debug = require("debug")(`${packageJSON.name}:${__filename}`);
 
 // the mongodb server URL
-const dbURL = 'mongodb+srv://test:0gcb1NPERFKJYTZj@cluster0.r0pf1cv.mongodb.net/LectureExample?retryWrites=true&w=majority';
+const dbURL =
+  "mongodb+srv://test:0gcb1NPERFKJYTZj@cluster0.r0pf1cv.mongodb.net/LectureExample?retryWrites=true&w=majority";
 
 /**
  * MongoClient for database connection.
- * 
+ *
  * @type {MongoClient}
  */
 let _mongoClient;
@@ -25,45 +25,49 @@ let _mongoClient;
 const connect = async () => {
   // always use try/catch to handle any exception
   try {
-    _mongoClient = await MongoClient.connect(
-      dbURL,
-      { useNewUrlParser: true, useUnifiedTopology: true },
-    );
-    console.log(`Connected to mongodb`);
+    _mongoClient = await MongoClient.connect(dbURL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      connectTimeoutMS: 7000,
+      socketTimeoutMS: 7000,
+    });
+    debug("Connected to mongodb");
   } catch (err) {
-    console.log(err);
+    debug(err);
   }
 };
 
 const getDb = async () => {
   if (!_mongoClient) {
     await connect();
-  } 
-  
+  }
+
   return _mongoClient.db();
-}
+};
 
 /**
  * The mongo client running on the server.
- * 
+ *
  * @returns {MongoClient}
  */
 const getMongoClient = () => _mongoClient;
 
 const dbStuff = {
   connect,
-  getDb
-}
+  getDb,
+};
 
 // CREATE a new student
 // takes a db connector and a student object
 // and add the user to the DB
 const addStudent = async (newStudent) => {
-  console.log('adding student');
+  debug("adding student");
   const db = await getDb();
   // callback version
-  const result = await db.collection('students').insertOne(newStudent);
-  console.log(`New student created with id: ${result.insertedId}`);
+  const result = await db.collection("students").insertOne(newStudent);
+  debug(`New student created with id: ${result.insertedId}`);
   return result;
 };
 
@@ -71,12 +75,12 @@ const addStudent = async (newStudent) => {
 // await/async syntax
 const getAllStudents = async (db) => {
   try {
-    const result = await db.collection('students').find({}).toArray();
+    const result = await db.collection("students").find({}).toArray();
     // print the results
-    console.log(`Students: ${JSON.stringify(result)}`);
+    debug(`Students: ${JSON.stringify(result)}`);
     return result;
   } catch (err) {
-    console.log(`error: ${err.message}`);
+    debug(`error: ${err.message}`);
   }
 };
 
@@ -84,13 +88,15 @@ const getAllStudents = async (db) => {
 const getAStudent = async (studentID) => {
   try {
     const db = await getDb();
-    const result = await db.collection('students').findOne({ _id: ObjectId(studentID) });
-    
+    const result = await db
+      .collection("students")
+      .findOne({ _id: ObjectId(studentID) });
+
     // print the result
-    console.log(`Student: ${JSON.stringify(result)}`);
+    debug(`Student: ${JSON.stringify(result)}`);
     return result;
   } catch (err) {
-    console.log(`error: ${err.message}`);
+    debug(`error: ${err.message}`);
   }
 };
 
@@ -98,14 +104,13 @@ const getAStudent = async (studentID) => {
 const updateStudent = async (studentID, newMajor) => {
   try {
     const db = await getDb();
-    const result = await db.collection('students').updateOne(
-      { _id: ObjectId(studentID) },
-      { $set: { major: newMajor } },
-    );
-      // print the result
-    console.log(`Student: ${JSON.stringify(result)}`);
+    const result = await db
+      .collection("students")
+      .updateOne({ _id: ObjectId(studentID) }, { $set: { major: newMajor } });
+    // print the result
+    debug(`Student: ${JSON.stringify(result)}`);
   } catch (err) {
-    console.log(`error: ${err.message}`);
+    debug(`error: ${err.message}`);
   }
 };
 
@@ -113,13 +118,13 @@ const updateStudent = async (studentID, newMajor) => {
 const deleteStudent = async (studentID) => {
   try {
     const db = await getDb();
-    const result = await db.collection('students').deleteOne(
-      { _id: ObjectId(studentID) },
-    );
+    const result = await db
+      .collection("students")
+      .deleteOne({ _id: ObjectId(studentID) });
     // print the result
-    console.log(`Student: ${JSON.stringify(result)}`);
+    debug(`Student: ${JSON.stringify(result)}`);
   } catch (err) {
-    console.log(`error: ${err.message}`);
+    debug(`error: ${err.message}`);
   }
 };
 
@@ -138,11 +143,11 @@ const main = async () => {
 // main();
 module.exports = {
   dbStuff,
-  connect, 
-  addStudent, 
-  getAllStudents, 
-  getAStudent, 
-  updateStudent, 
-  deleteStudent, 
-  getMongoClient
+  connect,
+  addStudent,
+  getAllStudents,
+  getAStudent,
+  updateStudent,
+  deleteStudent,
+  getMongoClient,
 };

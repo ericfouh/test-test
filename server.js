@@ -1,13 +1,10 @@
 // Import express
 const express = require('express');
-
 // enable cross-origin resource sharing (cors)
 const cors = require('cors');
-
-// Create express app
 const webapp = express();
-
-webapp.use(cors());
+const packageJSON = require("./package.json");
+const debug = require("debug")(`${packageJSON.name}:${__filename}`);
 
 // Import database operations
 const dbLib = require('./dbFunctions');
@@ -15,6 +12,7 @@ const dbLib = require('./dbFunctions');
 // Server port
 const port = 8080;
 
+webapp.use(cors());
 webapp.use(express.json());
 
 // declare DB reference variable
@@ -29,7 +27,7 @@ webapp.get('/', (_req, res) => {
 
 // Other API endpoints
 webapp.get('/students', async (_req, res) => {
-  console.log('READ all students');
+  debug('READ all students');
   try {
     const results = await dbLib.getAllStudents(db);
     res.status(200).json({ data: results });
@@ -39,7 +37,7 @@ webapp.get('/students', async (_req, res) => {
 });
 
 webapp.get('/student/:id', async (req, res) => {
-  console.log('READ a player by id');
+  debug('READ a player by id');
   try {
     if (req.params.id === undefined) {
       res.status(404).json({ error: 'id is missing' });
@@ -57,7 +55,7 @@ webapp.get('/student/:id', async (req, res) => {
 });
 
 webapp.post('/student/', async (req, res) => {
-  console.log('CREATE a student', req.body);
+  debug('CREATE a student', req.body);
   if (!req.body.name || !req.body.email || !req.body.major) {
     res.status(404).json({ error: 'missing name or email or major' });
     return;
@@ -71,13 +69,13 @@ webapp.post('/student/', async (req, res) => {
 
   try {
     const result = await dbLib.addStudent(newStudent);
-    console.log(`id: ${result.insertedId}`, result.insertedId);
+    debug(`id: ${result.insertedId}`, result.insertedId);
     // add id to new player and return it
     res.status(201).json({
       student: { id: result.insertedId, ...newStudent },
     });
   } catch (err) {
-    console.log('wow in here', err);
+    debug('wow in here', err);
     res.status(404).json({ error: err.message });
   }
 });
@@ -87,10 +85,10 @@ webapp.delete('/student/:id', async (req, res) => {
     res.status(404).json({ error: 'id is missing' });
     return;
   }
-  console.log('DELETE a player');
+  debug('DELETE a player');
   try {
     const result = await dbLib.deleteStudent(req.params.id);
-    console.log(`result-->${result}`);
+    debug(`result-->${result}`);
     if (Number(result) === 0) {
       res.status(404).json({ error: 'student not in the system' });
       return;

@@ -2,10 +2,11 @@ const request = require("supertest");
 const { MongoClient, Db, Server } = require("mongodb");
 const webapp = require("./server");
 const { getMongoClient } = require("./dbFunctions");
+const packageJSON = require('./package.json');
+const debug = require('debug')(`${packageJSON.name}:${__filename}`);
 
 // URL of db on the cloud
-const url =
-  "mongodb+srv://test:0gcb1NPERFKJYTZj@cluster0.r0pf1cv.mongodb.net/LectureExample?retryWrites=true&w=majority";
+const url = "mongodb+srv://test:0gcb1NPERFKJYTZj@cluster0.r0pf1cv.mongodb.net/LectureExample?retryWrites=true&w=majority";
 
 // Connect to our db on the cloud
 
@@ -15,11 +16,20 @@ const url =
  */
 const connect = async () => {
   try {
+
+    /**
+     * MongoClient object.
+     * 
+     * @type {MongoClient}
+     */
     const mongoClient = await MongoClient.connect(url, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      connectTimeoutMS: 7000,
+      socketTimeoutMS: 7000
     });
 
+    debug(`Connected to database: ${mongoClient.db().databaseName}`);
     return mongoClient;
   } catch (err) {
     console.error(err.message);
@@ -52,56 +62,52 @@ describe("/students/ route", () => {
   beforeAll(async () => {
     _mongoClient = await connect();
     db = _mongoClient.db();
-    console.log(`Connected to database: ${db.databaseName}`);
     await request(webapp)
       .post("/student/")
       .accept("json")
       .send(testStudent)
       .then((res) => {
-        console.log("res", res.text);
         actualStatus = res.status;
         actualResponseText = JSON.parse(res.text);
 
-        expect(res.status).toEqual(201);
-        expect(res.type).toBe("application/json");
-        // toMatchObject check that a JavaScript object matches
-        // a subset of the properties of an object
-        const { student: newStud } = JSON.parse(res.text);
-        console.log("<-->", newStud);
-        expect(newStud).toMatchObject(testStudent);
+        expect(res.type).toBe("application/json"); // TODO: Move to own test.
       });
-  });
+  }, 10000);
 
   const clearDatabase = async () => {
+    if (!db) {
+      return;
+    }
+
     try {
       const result = await db
         .collection("students")
         .deleteOne({ name: "testuser" });
       const { deletedCount } = result;
       if (deletedCount === 1) {
-        console.log("info", "Successfully deleted test student");
+        debug("info", "Successfully deleted test student");
       } else {
-        console.log(
+        debug(
           "warning",
           "test student was not deleted or it was not found in database"
         );
       }
     } catch (err) {
-      console.log("error", err.message);
+      debug("error", err.message);
     }
   };
 
   afterAll(async () => {
     await clearDatabase();
-    await _mongoClient.close();
-    await getMongoClient().close(); // mongo client that started server.
+    await getMongoClient()?.close(); // mongo client that started server.
+    await _mongoClient?.close();
   });
 
-  test("returns 201 status for valid post", async () => {
+  test("returns 201 status for valid post", () => {
     expect(actualStatus).toEqual(201);
   });
 
-  test("returns correct response text", async () => {
+  test("returns correct response text", () => {
     const { student: actualStudentResponseObj } = actualResponseText;
     expect(actualStudentResponseObj).toMatchObject(testStudent);
   });
