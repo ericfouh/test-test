@@ -1,30 +1,28 @@
 {
-  "name": "backend",
+  "name": "studentsbackend",
   "version": "1.0.0",
-  "description": "backend folder",
-  "main": "server.js",
+  "description": "the backend of the students app. Implemented with mongodb and express",
+  "main": "index.js",
   "scripts": {
-    "lint": " eslint --ignore-pattern *.test.js --ignore-pattern *.test.jsx ",
-    "start": "node server.js",
-    "test": "jest  --coverage"
+    "start": "node index.js",
+    "test": "jest --coverage --runInBand",
+    "build": "npm install  && cd StudentsAppFrontend && npm install  && npm run build"
   },
   "keywords": [
     "backend",
+    "mongodb",
     "express",
-    "nodejs",
-    "mongodb"
+    "nodejs"
   ],
-  "author": "eric fouh",
+  "author": "cis3500",
   "license": "ISC",
-  "devDependencies": {
-    "eslint": "^8.26.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "supertest": "^6.3.1"
-  },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "mongodb": "^4.11.0"
+    "jsonwebtoken": "^9.0.0",
+    "mongodb": "^5.1.0",
+    "path": "^0.12.7",
+    "supertest": "^6.3.3"
   }
 }
